@@ -1,0 +1,261 @@
+@import "tailwindcss";
+
+/* Die Schriften werden selbst gehostet (DSGVO: keine Anfrage an Google Fonts).
+   Eingebunden werden sie per JS-Import in src/app/layout.tsx – so übernimmt
+   Next.js Bundling und Preloading der Font-Dateien. */
+
+@theme {
+  /* Markenfarben, direkt aus dem Logo abgetastet */
+  --color-plum-950: #150125;
+  --color-plum-900: #23063a;
+  --color-plum-800: #310252;
+  --color-plum-700: #4a0a6b;
+  --color-plum-600: #6b1085;
+  --color-magenta-700: #9c0052;
+  --color-magenta-600: #b8005f;
+  --color-magenta-500: #d6006d;
+  --color-magenta-300: #f07fb2;
+  --color-magenta-100: #fbe0ed;
+
+  /* Warme Neutraltöne – bewusst kein reines Weiß/Grau */
+  --color-paper: #fbf7f5;
+  --color-sand: #f1e8e3;
+  --color-sand-dark: #e3d6cf;
+  --color-ink: #240733;
+  --color-ink-muted: #61506c;
+
+  --font-display: "Fraunces Variable", "Iowan Old Style", Georgia, serif;
+  --font-sans: "Inter Variable", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+
+  --radius-card: 1.25rem;
+}
+
+@layer base {
+  :root {
+    color-scheme: light;
+    --edge: color-mix(in oklab, var(--color-plum-800) 14%, transparent);
+  }
+
+  html {
+    scroll-behavior: smooth;
+    -webkit-text-size-adjust: 100%;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    html { scroll-behavior: auto; }
+    *, *::before, *::after {
+      animation-duration: 0.01ms !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+
+  body {
+    background-color: var(--color-paper);
+    color: var(--color-ink);
+    font-family: var(--font-sans);
+    /* Stilsets von Inter (Kleinbuchstabe l mit Schwanz, geschwungenes g).
+       Gilt nur für den Fließtext – die Überschriften setzen das im
+       Komponenten-Layer wieder zurück, siehe .display. */
+    font-feature-settings: "cv05" 1, "ss03" 1;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  ::selection {
+    background: var(--color-magenta-500);
+    color: #fff;
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--color-magenta-500);
+    outline-offset: 3px;
+    border-radius: 3px;
+  }
+}
+
+@layer components {
+  /* ── Typografie ──────────────────────────────────────────────────────────── */
+  /* ── Fraunces von den Inter-Features befreien ─────────────────────────────
+     Der Body setzt font-feature-settings: "cv05" 1, "ss03" 1 – das sind
+     Stilsets von *Inter*. OpenType-Features werden vererbt, und die Kennungen
+     sind pro Schrift frei belegt: In Fraunces schaltet ss03 andere
+     Buchstabenformen. Ergebnis waren geschwungene j und f in den Überschriften
+     ("jemandem", "Telefon"). Deshalb hier explizit zurücksetzen.
+
+     Hinweis für später: Wird in layout.tsx auf
+     "@fontsource-variable/fraunces/full.css" umgestellt, kommen die Achsen
+     SOFT/WONK/opsz dazu. Dann hier zusätzlich
+     font-variation-settings: "SOFT" 0, "WONK" 0; setzen, sonst können die
+     Schnörkel über die Achse zurückkommen. */
+  .display,
+  .display-tight,
+  .font-display {
+    font-feature-settings: normal;
+  }
+
+  .display {
+    font-family: var(--font-display);
+    font-weight: 400;
+    letter-spacing: -0.022em;
+    line-height: 0.98;
+  }
+
+  .display-tight {
+    font-family: var(--font-display);
+    font-weight: 500;
+    letter-spacing: -0.015em;
+    line-height: 1.08;
+  }
+
+  /* Kleines Label über Abschnitten – gibt der Seite ihren editorialen Rhythmus */
+  .eyebrow {
+    font-size: 0.6875rem;
+    font-weight: 600;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--color-magenta-700);
+    display: inline-flex;
+    align-items: center;
+    gap: 0.625rem;
+  }
+
+  .eyebrow::before {
+    content: "";
+    width: 1.75rem;
+    height: 1px;
+    background: currentColor;
+    opacity: 0.6;
+  }
+
+  .eyebrow-light { color: var(--color-magenta-300); }
+
+  .lede {
+    font-size: clamp(1.0625rem, 0.95rem + 0.5vw, 1.3125rem);
+    line-height: 1.6;
+    color: var(--color-ink-muted);
+  }
+
+  /* ── Flächen ─────────────────────────────────────────────────────────────── */
+  .surface-dark {
+    background-color: var(--color-plum-950);
+    background-image:
+      radial-gradient(120% 90% at 12% -10%, color-mix(in oklab, var(--color-plum-700) 65%, transparent) 0%, transparent 58%),
+      radial-gradient(90% 70% at 96% 8%, color-mix(in oklab, var(--color-magenta-700) 42%, transparent) 0%, transparent 55%);
+    color: var(--color-paper);
+  }
+
+  /* Feines Korn nimmt dunklen Flächen das „digital flache“ */
+  .grain::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    opacity: 0.35;
+    mix-blend-mode: overlay;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)' opacity='0.5'/%3E%3C/svg%3E");
+  }
+
+  .hairline { border-top: 1px solid var(--edge); }
+
+  /* ── Buttons ─────────────────────────────────────────────────────────────── */
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 0.875rem 1.5rem;
+    border-radius: 999px;
+    font-size: 0.9375rem;
+    font-weight: 600;
+    letter-spacing: -0.005em;
+    transition: transform 0.18s cubic-bezier(0.2, 0.8, 0.2, 1), background-color 0.18s, color 0.18s, box-shadow 0.18s;
+    white-space: nowrap;
+  }
+
+  .btn:active { transform: translateY(1px); }
+
+  .btn-primary {
+    background: var(--color-magenta-500);
+    color: #fff;
+    box-shadow: 0 1px 2px rgba(36, 7, 51, 0.18), 0 10px 24px -12px rgba(214, 0, 109, 0.75);
+  }
+
+  .btn-primary:hover { background: var(--color-magenta-600); }
+
+  .btn-ghost {
+    border: 1px solid var(--edge);
+    color: var(--color-plum-800);
+    background: transparent;
+  }
+
+  .btn-ghost:hover {
+    background: var(--color-plum-800);
+    border-color: var(--color-plum-800);
+    color: var(--color-paper);
+  }
+
+  .btn-on-dark {
+    border: 1px solid color-mix(in oklab, var(--color-paper) 28%, transparent);
+    color: var(--color-paper);
+  }
+
+  .btn-on-dark:hover {
+    background: var(--color-paper);
+    color: var(--color-plum-900);
+  }
+
+  /* ── Links ───────────────────────────────────────────────────────────────── */
+  .link-underline {
+    background-image: linear-gradient(var(--color-magenta-500), var(--color-magenta-500));
+    background-size: 0% 1.5px;
+    background-position: 0 100%;
+    background-repeat: no-repeat;
+    transition: background-size 0.28s cubic-bezier(0.2, 0.8, 0.2, 1);
+    padding-bottom: 2px;
+  }
+
+  .link-underline:hover { background-size: 100% 1.5px; }
+
+  /* ── Bild-Rahmen: versetzter Magenta-Rahmen als Wiedererkennungsmerkmal ──── */
+  /* Wichtig: Auf .frame-offset selbst darf weder overflow:hidden noch ein
+     Hintergrund liegen – das Bild gehört in ein inneres, `relative`
+     positioniertes Element, damit es über der Rahmenlinie liegt. */
+  .frame-offset {
+    position: relative;
+  }
+
+  .frame-offset::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    translate: 14px 14px;
+    border: 1.5px solid var(--color-magenta-500);
+    border-radius: var(--radius-card);
+    pointer-events: none;
+  }
+
+  @media (max-width: 640px) {
+    .frame-offset::before { translate: 8px 8px; }
+  }
+}
+
+@layer utilities {
+  .wrap { width: 100%; max-width: 78rem; margin-inline: auto; padding-inline: 1.25rem; }
+  @media (min-width: 768px) { .wrap { padding-inline: 2.5rem; } }
+
+  .balance { text-wrap: balance; }
+  .pretty { text-wrap: pretty; }
+
+  /* Sanftes Einblenden beim Scrollen, ohne JS-Bibliothek */
+  .reveal {
+    opacity: 0;
+    transform: translateY(18px);
+    transition: opacity 0.7s cubic-bezier(0.2, 0.8, 0.2, 1), transform 0.7s cubic-bezier(0.2, 0.8, 0.2, 1);
+  }
+
+  .reveal.is-visible { opacity: 1; transform: none; }
+
+  @media (prefers-reduced-motion: reduce) {
+    .reveal { opacity: 1; transform: none; }
+  }
+}
