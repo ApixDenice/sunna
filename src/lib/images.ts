@@ -22,6 +22,18 @@ const CACHE_TAG = "sunna-images";
 export const useBlob = () => Boolean(process.env.BLOB_READ_WRITE_TOKEN);
 
 /**
+ * Für die Statusanzeige im Admin. Eigener Name, weil `useBlob` wie ein
+ * React-Hook aussieht und in einer Komponente aufgerufen werden soll.
+ */
+export function speicherStatus() {
+  return {
+    blobVerbunden: Boolean(process.env.BLOB_READ_WRITE_TOKEN),
+    inDerCloud: Boolean(process.env.VERCEL),
+    umgebung: process.env.VERCEL_ENV ?? "lokal",
+  };
+}
+
+/**
  * Der lokale Zweig schreibt nach public/uploads. Auf Vercel ist das Dateisystem
  * zur Laufzeit schreibgeschützt – ein Upload würde dort mit einem kryptischen
  * EROFS-Fehler abbrechen und Kerstin ratlos zurücklassen. Deshalb hier ein

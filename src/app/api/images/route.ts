@@ -13,6 +13,18 @@ function refreshSite() {
   revalidatePath("/", "layout");
 }
 
+/**
+ * Fehler aus lib/images.ts wörtlich durchreichen, wenn sie der Nutzerin
+ * tatsächlich weiterhelfen – etwa der fehlende Blob-Store. Ein pauschales
+ * „bitte erneut versuchen" schickt sie sonst in eine Endlosschleife, weil ein
+ * zweiter Versuch am selben Konfigurationsfehler scheitert.
+ */
+function nutzbareMeldung(err: unknown, fallback: string) {
+  return err instanceof Error && err.message.startsWith("Bild-Upload nicht möglich")
+    ? err.message
+    : fallback;
+}
+
 export async function POST(request: Request) {
   if (!(await isAuthenticated())) {
     return NextResponse.json({ error: "Nicht angemeldet." }, { status: 401 });
@@ -54,7 +66,12 @@ export async function POST(request: Request) {
   } catch (err) {
     console.error("[api/images] Upload fehlgeschlagen:", err);
     return NextResponse.json(
-      { error: "Das Bild konnte nicht gespeichert werden. Bitte erneut versuchen." },
+      {
+        error: nutzbareMeldung(
+          err,
+          "Das Bild konnte nicht gespeichert werden. Bitte erneut versuchen.",
+        ),
+      },
       { status: 500 },
     );
   }
@@ -76,6 +93,9 @@ export async function DELETE(request: Request) {
     return NextResponse.json({ ok: true, url: slot.src });
   } catch (err) {
     console.error("[api/images] Zurücksetzen fehlgeschlagen:", err);
-    return NextResponse.json({ error: "Zurücksetzen fehlgeschlagen." }, { status: 500 });
+    return NextResponse.json(
+      { error: nutzbareMeldung(err, "Zurücksetzen fehlgeschlagen.") },
+      { status: 500 },
+    );
   }
 }

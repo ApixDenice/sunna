@@ -9,7 +9,17 @@ import type { TextField } from "@/lib/slot-texts";
 type TextView = TextField & { value: string; isCustom: boolean };
 type SlotView = ImageSlot & { currentUrl: string; isCustom: boolean; texts: TextView[] };
 
-export default function AdminPanel({ slots, groups }: { slots: SlotView[]; groups: string[] }) {
+type Speicher = { blobVerbunden: boolean; inDerCloud: boolean; umgebung: string };
+
+export default function AdminPanel({
+  slots,
+  groups,
+  speicher,
+}: {
+  slots: SlotView[];
+  groups: string[];
+  speicher: Speicher;
+}) {
   return (
     <div className="min-h-dvh bg-paper">
       <header className="sticky top-0 z-30 border-b border-[var(--edge)] bg-paper/90 backdrop-blur-xl">
@@ -19,6 +29,7 @@ export default function AdminPanel({ slots, groups }: { slots: SlotView[]; group
             <span className="hidden text-sm text-ink-muted sm:inline">Sunna Photovoltaik</span>
           </div>
           <div className="flex items-center gap-3">
+            <SpeicherAnzeige speicher={speicher} />
             <a href="/" target="_blank" rel="noreferrer" className="text-sm text-ink-muted link-underline">
               Website ansehen ↗
             </a>
@@ -384,5 +395,43 @@ function TextRow({ slotId, field }: { slotId: string; field: TextView }) {
         {done && !busy && <span className="text-xs font-semibold text-magenta-600">Gespeichert</span>}
       </div>
     </div>
+  );
+}
+
+/* ── Wo landen Bilder und Texte? ──────────────────────────────────────────────
+   Zeigt, was der Server tatsächlich vorfindet – nicht, was im Dashboard
+   eingestellt sein sollte. Genau diese Lücke kostet sonst eine Stunde
+   Fehlersuche: Store verbunden, Variable trotzdem nicht in der Funktion. */
+function SpeicherAnzeige({ speicher }: { speicher: Speicher }) {
+  const { blobVerbunden, inDerCloud, umgebung } = speicher;
+
+  const ok = blobVerbunden || !inDerCloud;
+  const text = blobVerbunden
+    ? `Speicher: Vercel Blob (${umgebung})`
+    : inDerCloud
+      ? `Speicher fehlt (${umgebung})`
+      : "Speicher: lokal";
+
+  return (
+    <span
+      title={
+        blobVerbunden
+          ? "BLOB_READ_WRITE_TOKEN ist gesetzt. Änderungen werden dauerhaft gespeichert."
+          : inDerCloud
+            ? "BLOB_READ_WRITE_TOKEN fehlt in dieser Bereitstellung. Blob-Store verbinden und neu bereitstellen."
+            : "Lokale Entwicklung: Bilder unter public/uploads, Texte unter .data/"
+      }
+      className={`hidden items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-medium sm:inline-flex ${
+        ok
+          ? "border-[var(--edge)] text-ink-muted"
+          : "border-magenta-500 bg-magenta-100 text-magenta-700"
+      }`}
+    >
+      <span
+        aria-hidden
+        className={`h-1.5 w-1.5 rounded-full ${ok ? "bg-magenta-500" : "bg-magenta-700"}`}
+      />
+      {text}
+    </span>
   );
 }

@@ -1,5 +1,5 @@
 import { isAuthenticated } from "@/lib/auth";
-import { getManifest } from "@/lib/images";
+import { getManifest, speicherStatus } from "@/lib/images";
 import { getTexts } from "@/lib/texts";
 import { textFieldsFor } from "@/lib/slot-texts";
 import { imageSlots, slotGroups } from "@/lib/slots";
@@ -30,5 +30,5 @@ export default async function AdminPage() {
     }),
   }));
 
-  return <AdminPanel slots={slots} groups={slotGroups} />;
+  return <AdminPanel slots={slots} groups={slotGroups} speicher={speicherStatus()} />;
 }
