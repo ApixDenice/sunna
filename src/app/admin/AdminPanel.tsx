@@ -292,7 +292,12 @@ function TextRow({ slotId, field }: { slotId: string; field: TextView }) {
   const [saved, setSaved] = useState(field.value);
   const [isCustom, setIsCustom] = useState(field.isCustom);
   const [busy, setBusy] = useState(false);
-  const [done, setDone] = useState(false);
+  // Kurze Rueckmeldung nach jeder Aktion. Als Text statt als Flag, weil
+  // Speichern und Zuruecksetzen verschiedene Saetze brauchen: Beim
+  // Zuruecksetzen ist ohne Rueckmeldung nicht erkennbar, dass es bereits
+  // gespeichert IST - der Speichern-Knopf ist danach ausgegraut, und das
+  // liest sich wie "geht nicht" statt wie "nichts mehr zu tun".
+  const [done, setDone] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const dirty = value.trim() !== saved.trim();
@@ -313,8 +318,8 @@ function TextRow({ slotId, field }: { slotId: string; field: TextView }) {
       setValue(data.value);
       setSaved(data.value);
       setIsCustom(data.isCustom);
-      setDone(true);
-      setTimeout(() => setDone(false), 2500);
+      setDone("Gespeichert");
+      setTimeout(() => setDone(null), 2500);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Unbekannter Fehler.");
     } finally {
@@ -335,6 +340,10 @@ function TextRow({ slotId, field }: { slotId: string; field: TextView }) {
       setValue(data.value);
       setSaved(data.value);
       setIsCustom(false);
+      // Zuruecksetzen speichert bereits - deshalb dieselbe Rueckmeldung wie
+      // beim Speichern, sonst wirkt der Schritt wie unerledigt.
+      setDone("Ursprünglicher Text ist wieder gespeichert");
+      setTimeout(() => setDone(null), 3500);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Unbekannter Fehler.");
     } finally {
@@ -391,10 +400,20 @@ function TextRow({ slotId, field }: { slotId: string; field: TextView }) {
           type="button"
           onClick={() => void send(value)}
           disabled={busy || !dirty}
+          title={
+            dirty
+              ? "Änderung speichern"
+              : "Nichts zu speichern – im Feld steht genau der Text, der gerade gespeichert ist."
+          }
           className="btn btn-primary !px-3 !py-1.5 !text-xs disabled:opacity-40"
         >
           Speichern
         </button>
+        {/* Der ausgegraute Knopf erklaert sich nicht von selbst. Ein Satz
+            daneben spart die Frage, ob gerade etwas klemmt. */}
+        {!dirty && !busy && !done && (
+          <span className="text-xs text-ink-muted">Nichts zu speichern – Stand ist aktuell.</span>
+        )}
         {isCustom && (
           <button
             type="button"
@@ -405,7 +424,7 @@ function TextRow({ slotId, field }: { slotId: string; field: TextView }) {
             Ursprünglichen Text zurückholen
           </button>
         )}
-        {done && !busy && <span className="text-xs font-semibold text-magenta-600">Gespeichert</span>}
+        {done && !busy && <span className="text-xs font-semibold text-magenta-600">{done}</span>}
       </div>
     </div>
   );
