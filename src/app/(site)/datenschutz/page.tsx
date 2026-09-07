@@ -15,13 +15,16 @@ export const metadata: Metadata = {
  * (kein Tracking, keine Cookies außer der Admin-Session, keine externen
  * Schriften, keine Kartendienst-Einbettung).
  *
- * Hoster (Vercel) und Mailversand (Resend) sind mit Firmierung und Anschrift
- * eingetragen. VORAUSSETZUNG, die noch erfüllt werden muss:
+ * Es gibt nur noch EINEN Auftragsverarbeiter: den Hoster Vercel. Der frühere
+ * Mailversand über Resend ist entfallen – das Kontaktformular übergibt die
+ * Anfrage jetzt an das E-Mail-Programm des Besuchers, es erreicht unseren
+ * Server also gar keine Formulardaten mehr (siehe kontakt/ContactForm.tsx).
+ *
+ * VORAUSSETZUNG, die noch erfüllt werden muss:
  *   • Auftragsverarbeitungsvertrag (AVV/DPA) mit Vercel abschließen
  *     – im Vercel-Dashboard unter Settings → Legal.
- *   • Auftragsverarbeitungsvertrag mit Resend abschließen (resend.com/legal).
- * Beide Texte oben behaupten, dass diese Verträge bestehen. Ohne Abschluss
- * wäre das eine unwahre Angabe – also erst abschließen, dann live gehen.
+ * Der Text oben behauptet, dass dieser Vertrag besteht. Ohne Abschluss wäre
+ * das eine unwahre Angabe – also erst abschließen, dann live gehen.
  * Rechtliche Prüfung durch eine Anwältin/einen Anwalt wird weiterhin empfohlen.
  */
 
@@ -93,25 +96,26 @@ export default function DatenschutzPage() {
 
         <Section title="4. Kontaktformular und Kontaktaufnahme">
           <p>
-            Wenn Sie uns über das Formular auf der{" "}
+            Wenn Sie das Formular auf der{" "}
             <Link href="/kontakt" className="link-underline text-plum-800">
               Kontaktseite
             </Link>{" "}
-            schreiben, verarbeiten wir die von Ihnen angegebenen Daten (Name, E-Mail-Adresse,
-            optional Telefonnummer und Ort, Ihr Anliegen sowie Ihre Nachricht) ausschließlich zur
-            Bearbeitung Ihrer Anfrage.
+            ausfüllen, werden Ihre Angaben <strong>nicht an diese Website übertragen</strong>.
+            Sie bleiben in Ihrem Browser; beim Absenden wird daraus lediglich eine vorbereitete
+            E-Mail zusammengestellt und an Ihr eigenes E-Mail-Programm übergeben. Ob und wann Sie
+            diese Nachricht abschicken, entscheiden allein Sie. Bis dahin findet keine
+            Verarbeitung durch uns und keine Weitergabe an Dritte statt.
           </p>
           <p>
-            Rechtsgrundlage ist Art. 6 Abs. 1 lit. b DSGVO (vorvertragliche Maßnahmen) bzw.
-            Art. 6 Abs. 1 lit. a DSGVO (Ihre Einwilligung), die Sie jederzeit für die Zukunft
-            widerrufen können.
+            Schicken Sie die E-Mail ab, erreicht sie unser Postfach auf demselben Weg wie jede
+            andere E-Mail an uns. Die darin enthaltenen Daten (Name, E-Mail-Adresse,
+            gegebenenfalls Telefonnummer und Ort sowie Ihre Nachricht) verarbeiten wir
+            ausschließlich zur Bearbeitung Ihrer Anfrage. Rechtsgrundlage ist Art. 6 Abs. 1
+            lit. b DSGVO (Durchführung vorvertraglicher Maßnahmen) bzw. Art. 6 Abs. 1 lit. f
+            DSGVO (berechtigtes Interesse an der Beantwortung von Anfragen).
           </p>
           <p>
-            Der Versand der Anfrage an unser Postfach erfolgt über den Dienstleister Resend
-            (Plus Five Five, Inc., 2261 Market Street #5039, San Francisco, CA 94114, USA), mit
-            dem ein Auftragsverarbeitungsvertrag besteht. Die Übermittlung in die USA wird auf
-            die EU-Standardvertragsklauseln gestützt. Die Daten
-            verbleiben bei uns, bis Ihre Anfrage abschließend bearbeitet ist und keine
+            Die Daten verbleiben bei uns, bis Ihre Anfrage abschließend bearbeitet ist und keine
             gesetzlichen Aufbewahrungspflichten entgegenstehen.
           </p>
         </Section>
