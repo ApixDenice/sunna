@@ -19,7 +19,22 @@ const LOCAL_MANIFEST = path.join(process.cwd(), ".data", "manifest.json");
 const LOCAL_UPLOAD_DIR = path.join(process.cwd(), "public", "uploads");
 const CACHE_TAG = "sunna-images";
 
-export const useBlob = () => Boolean(process.env.BLOB_READ_WRITE_TOKEN);
+/**
+ * Ist ein Blob-Store angebunden?
+ *
+ * Zwei Wege, und beide zählen:
+ *  • `BLOB_STORE_ID` – setzt Vercel beim Verbinden eines Stores. Die
+ *    Anmeldung läuft dann über OIDC mit kurzlebigen, automatisch
+ *    rotierenden Tokens. Das ist auf Vercel der Normalfall.
+ *  • `BLOB_READ_WRITE_TOKEN` – langlebiger statischer Token. Braucht man
+ *    nur außerhalb von Vercel, etwa in einem CI-Lauf.
+ *
+ * Vorher wurde nur der Token geprüft. Das meldete „kein Store", obwohl über
+ * OIDC längst alles verbunden war – ein Fehlalarm, der genau in die Irre
+ * führt, weil im Dashboard alles richtig aussieht.
+ */
+export const useBlob = () =>
+  Boolean(process.env.BLOB_READ_WRITE_TOKEN || process.env.BLOB_STORE_ID);
 
 /**
  * Für die Statusanzeige im Admin. Eigener Name, weil `useBlob` wie ein
@@ -27,7 +42,7 @@ export const useBlob = () => Boolean(process.env.BLOB_READ_WRITE_TOKEN);
  */
 export function speicherStatus() {
   return {
-    blobVerbunden: Boolean(process.env.BLOB_READ_WRITE_TOKEN),
+    blobVerbunden: useBlob(),
     inDerCloud: Boolean(process.env.VERCEL),
     umgebung: process.env.VERCEL_ENV ?? "lokal",
   };

@@ -20,7 +20,10 @@ const STORE_PATH = "sunna/texts.json";
 const LOCAL_STORE = path.join(process.cwd(), ".data", "texts.json");
 const CACHE_TAG = "sunna-texts";
 
-const useBlob = () => Boolean(process.env.BLOB_READ_WRITE_TOKEN);
+// Erkennung wie in lib/images.ts – dort steht die Begründung.
+// BLOB_STORE_ID = über OIDC verbundener Store, BLOB_READ_WRITE_TOKEN = statischer Token.
+const useBlob = () =>
+  Boolean(process.env.BLOB_READ_WRITE_TOKEN || process.env.BLOB_STORE_ID);
 
 function assertWritableStore() {
   if (!useBlob() && process.env.VERCEL) {
