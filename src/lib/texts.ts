@@ -81,8 +81,13 @@ async function writeStore(store: TextStore) {
       access: "public",
       contentType: "application/json",
       addRandomSuffix: false,
-      allowOverwrite: true,
       cacheControlMaxAge: 0,
+      // Hinweis für ein späteres Upgrade auf @vercel/blob 1.x: Dort wirft put()
+      // beim Überschreiben eines vorhandenen Pfades, solange nicht
+      // `allowOverwrite: true` gesetzt ist. In der hier installierten 0.27.x
+      // gibt es die Option noch nicht – Überschreiben ist dort das
+      // Standardverhalten. Beim Versionswechsel also ergänzen, sonst schlägt
+      // jede Änderung im Admin fehl.
     });
   } else {
     await fs.mkdir(path.dirname(LOCAL_STORE), { recursive: true });
