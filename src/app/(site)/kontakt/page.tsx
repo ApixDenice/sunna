@@ -5,6 +5,22 @@ import SunArc from "@/components/SunArc";
 import ContactForm from "./ContactForm";
 import { site } from "@/lib/site";
 
+/**
+ * Selbstheilung statt blindes Vertrauen in den Cache.
+ *
+ * Diese Seite zeigt Bilder und Texte, die Kerstin im Admin ändert. Nach jeder
+ * Änderung ruft die API `revalidatePath("/", "layout")` – die Seite wird also
+ * sofort neu erzeugt. Ohne dieses `revalidate` wäre sie aber eine rein
+ * statische Seite, die AUSSCHLIESSLICH an diesem einen Aufruf hängt: Geht der
+ * Purge verloren, bleibt der alte Stand für immer stehen, und Kerstin hält
+ * ihre gespeicherte Änderung für verschluckt.
+ *
+ * Mit `revalidate` wird die Seite spätestens nach dieser Zeit ohnehin neu
+ * gebaut. Sofort-Aktualisierung bleibt der Normalfall, 60 Sekunden sind die
+ * Obergrenze im Fehlerfall.
+ */
+export const revalidate = 60;
+
 export const metadata: Metadata = {
   title: "Kontakt – kostenlose Beratung anfragen",
   description: `Sunna Photovoltaik erreichen Sie unter ${site.phone.display} oder ${site.email}. Kostenloser Beratungstermin in Lengede und Umgebung.`,

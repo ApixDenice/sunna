@@ -40,8 +40,12 @@ async function readStoreUncached(): Promise<TextStore> {
       const { list } = await import("@vercel/blob");
       const { blobs } = await list({ prefix: STORE_PATH, limit: 1 });
       if (!blobs.length) return {};
+      // Beim Überschreiben bleibt der Pfad – und damit die URL – gleich, das
+      // CDN würde also die alte Datei ausliefern. Zeitstempel gegen den
+      // CDN-Cache, `no-store` gegen den Fetch-Cache. Teuer ist das nicht:
+      // Dieser Aufruf steckt selbst in unstable_cache.
       const version = new Date(blobs[0].uploadedAt).getTime();
-      const res = await fetch(`${blobs[0].url}?v=${version}`);
+      const res = await fetch(`${blobs[0].url}?v=${version}`, { cache: "no-store" });
       if (!res.ok) return {};
       return (await res.json()) as TextStore;
     }
@@ -52,9 +56,12 @@ async function readStoreUncached(): Promise<TextStore> {
   }
 }
 
+// revalidate muss zur Seiten-Revalidierung passen (60 s). Stünde hier ein
+// größerer Wert, würde die Seite zwar neu gebaut, läse dabei aber weiter den
+// alten Cache-Eintrag – der äußere Neubau brächte dann gar nichts.
 export const getTexts = unstable_cache(readStoreUncached, ["sunna-text-store"], {
   tags: [CACHE_TAG],
-  revalidate: 300,
+  revalidate: 60,
 });
 
 /**

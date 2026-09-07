@@ -100,7 +100,7 @@ async function readManifestUncached(): Promise<Manifest> {
       // frische URL. So bleibt der normale Fetch-Cache nutzbar, ohne dass
       // ein Bildwechsel verzögert sichtbar wird.
       const version = new Date(blobs[0].uploadedAt).getTime();
-      const res = await fetch(`${blobs[0].url}?v=${version}`);
+      const res = await fetch(`${blobs[0].url}?v=${version}`, { cache: "no-store" });
       if (!res.ok) return {};
       return (await res.json()) as Manifest;
     }
@@ -113,9 +113,10 @@ async function readManifestUncached(): Promise<Manifest> {
 }
 
 /** Gecacht, damit nicht jede Seitenanfrage den Blob-Store anfasst. */
+// Siehe lib/texts.ts: muss zur Seiten-Revalidierung (60 s) passen.
 export const getManifest = unstable_cache(readManifestUncached, ["sunna-image-manifest"], {
   tags: [CACHE_TAG],
-  revalidate: 300,
+  revalidate: 60,
 });
 
 /** Liefert die anzuzeigende Bild-URL für einen Slot (Upload schlägt Standardbild). */

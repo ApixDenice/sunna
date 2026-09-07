@@ -5,6 +5,22 @@ import Reveal from "@/components/Reveal";
 import SunArc from "@/components/SunArc";
 import { site } from "@/lib/site";
 
+/**
+ * Selbstheilung statt blindes Vertrauen in den Cache.
+ *
+ * Diese Seite zeigt Bilder und Texte, die Kerstin im Admin ändert. Nach jeder
+ * Änderung ruft die API `revalidatePath("/", "layout")` – die Seite wird also
+ * sofort neu erzeugt. Ohne dieses `revalidate` wäre sie aber eine rein
+ * statische Seite, die AUSSCHLIESSLICH an diesem einen Aufruf hängt: Geht der
+ * Purge verloren, bleibt der alte Stand für immer stehen, und Kerstin hält
+ * ihre gespeicherte Änderung für verschluckt.
+ *
+ * Mit `revalidate` wird die Seite spätestens nach dieser Zeit ohnehin neu
+ * gebaut. Sofort-Aktualisierung bleibt der Normalfall, 60 Sekunden sind die
+ * Obergrenze im Fehlerfall.
+ */
+export const revalidate = 60;
+
 export const metadata: Metadata = {
   title: "Über uns – Kerstin Klaiber",
   description:
