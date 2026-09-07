@@ -20,21 +20,28 @@ const LOCAL_UPLOAD_DIR = path.join(process.cwd(), "public", "uploads");
 const CACHE_TAG = "sunna-images";
 
 /**
- * Ist ein Blob-Store angebunden?
+ * Ist ein Blob-Store nutzbar?
  *
- * Zwei Wege, und beide zählen:
- *  • `BLOB_STORE_ID` – setzt Vercel beim Verbinden eines Stores. Die
- *    Anmeldung läuft dann über OIDC mit kurzlebigen, automatisch
- *    rotierenden Tokens. Das ist auf Vercel der Normalfall.
- *  • `BLOB_READ_WRITE_TOKEN` – langlebiger statischer Token. Braucht man
- *    nur außerhalb von Vercel, etwa in einem CI-Lauf.
+ * Entscheidend ist allein `BLOB_READ_WRITE_TOKEN`, und zwar nicht aus
+ * Bequemlichkeit, sondern weil die hier installierte @vercel/blob 0.27.x
+ * nichts anderes lesen kann – in ihrem Bundle steht wörtlich:
  *
- * Vorher wurde nur der Token geprüft. Das meldete „kein Store", obwohl über
- * OIDC längst alles verbunden war – ein Fehlalarm, der genau in die Irre
- * führt, weil im Dashboard alles richtig aussieht.
+ *   if (process.env.BLOB_READ_WRITE_TOKEN) return process.env.BLOB_READ_WRITE_TOKEN;
+ *   throw new Error("No token found. …")
+ *
+ * Vercel verbindet Stores heute per OIDC und setzt dabei nur `BLOB_STORE_ID`.
+ * Im Dashboard sieht damit alles verbunden aus, die Bibliothek kommt aber
+ * trotzdem nicht an den Store. Erst @vercel/blob 1.x versteht OIDC; bis zu
+ * diesem Upgrade muss der Token von Hand als Environment Variable stehen.
+ * Deshalb: `BLOB_STORE_ID` allein zählt bewusst NICHT als nutzbarer Store –
+ * sonst läuft der Upload in ein nichtssagendes „No token found“, statt hier
+ * mit einer Anleitung abzubrechen.
  */
-export const useBlob = () =>
-  Boolean(process.env.BLOB_READ_WRITE_TOKEN || process.env.BLOB_STORE_ID);
+export const useBlob = () => Boolean(process.env.BLOB_READ_WRITE_TOKEN);
+
+/** Store verbunden, aber ohne Token – der Fall, der oben beschrieben ist. */
+const nurOidcVerbunden = () =>
+  Boolean(process.env.BLOB_STORE_ID) && !process.env.BLOB_READ_WRITE_TOKEN;
 
 /**
  * Für die Statusanzeige im Admin. Eigener Name, weil `useBlob` wie ein
@@ -43,9 +50,30 @@ export const useBlob = () =>
 export function speicherStatus() {
   return {
     blobVerbunden: useBlob(),
+    tokenFehlt: nurOidcVerbunden(),
     inDerCloud: Boolean(process.env.VERCEL),
     umgebung: process.env.VERCEL_ENV ?? "lokal",
   };
+}
+
+/**
+ * Gemeinsamer Klartext für beide Speicher (Bilder und Texte), damit im Admin
+ * nicht zwei verschiedene Erklärungen für dieselbe Ursache auftauchen.
+ */
+export function speicherFehlerText(was: string) {
+  if (nurOidcVerbunden()) {
+    return (
+      `${was} nicht möglich: Der Blob-Store ist zwar mit dem Projekt verbunden, ` +
+      "es fehlt aber die Variable BLOB_READ_WRITE_TOKEN. In Vercel unter Storage → " +
+      "sunna-blob den Token kopieren und im Projekt unter Settings → Environment " +
+      "Variables als BLOB_READ_WRITE_TOKEN eintragen, dann neu deployen."
+    );
+  }
+  return (
+    `${was} nicht möglich: In der Cloud wird ein Vercel-Blob-Store benötigt. ` +
+    "Im Vercel-Dashboard unter Storage einen Blob-Store anlegen, mit dem Projekt " +
+    "verbinden und den Token als BLOB_READ_WRITE_TOKEN hinterlegen."
+  );
 }
 
 /**
@@ -56,11 +84,7 @@ export function speicherStatus() {
  */
 function assertWritableStore() {
   if (!useBlob() && process.env.VERCEL) {
-    throw new Error(
-      "Bild-Upload nicht möglich: In der Cloud wird ein Vercel-Blob-Store benötigt. " +
-        "Im Vercel-Dashboard unter Storage einen Blob-Store anlegen und mit dem Projekt " +
-        "verbinden – die Variable BLOB_READ_WRITE_TOKEN wird dann automatisch gesetzt.",
-    );
+    throw new Error(speicherFehlerText("Bild-Upload"));
   }
 }
 

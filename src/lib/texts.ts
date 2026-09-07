@@ -3,6 +3,7 @@ import { promises as fs } from "node:fs";
 import path from "node:path";
 import { unstable_cache, revalidateTag } from "next/cache";
 import { fallbackFor, fieldExists } from "./slot-texts";
+import { useBlob, speicherFehlerText } from "./images";
 
 /**
  * Speicherung der im Admin geänderten Bildtexte.
@@ -20,17 +21,14 @@ const STORE_PATH = "sunna/texts.json";
 const LOCAL_STORE = path.join(process.cwd(), ".data", "texts.json");
 const CACHE_TAG = "sunna-texts";
 
-// Erkennung wie in lib/images.ts – dort steht die Begründung.
-// BLOB_STORE_ID = über OIDC verbundener Store, BLOB_READ_WRITE_TOKEN = statischer Token.
-const useBlob = () =>
-  Boolean(process.env.BLOB_READ_WRITE_TOKEN || process.env.BLOB_STORE_ID);
+// Store-Erkennung und Fehlertext kommen aus lib/images.ts. Bewusst geteilt
+// statt kopiert: es ist derselbe Store, dieselbe Ursache – zwei Kopien liefen
+// sonst früher oder später auseinander und Kerstin bekäme für ein und dasselbe
+// Problem zwei verschiedene Erklärungen.
 
 function assertWritableStore() {
   if (!useBlob() && process.env.VERCEL) {
-    throw new Error(
-      "Text speichern nicht möglich: In der Cloud wird ein Vercel-Blob-Store benötigt. " +
-        "Im Vercel-Dashboard unter Storage einen Blob-Store anlegen und mit dem Projekt verbinden.",
-    );
+    throw new Error(speicherFehlerText("Text speichern"));
   }
 }
 

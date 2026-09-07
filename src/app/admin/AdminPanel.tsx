@@ -9,7 +9,13 @@ import type { TextField } from "@/lib/slot-texts";
 type TextView = TextField & { value: string; isCustom: boolean };
 type SlotView = ImageSlot & { currentUrl: string; isCustom: boolean; texts: TextView[] };
 
-type Speicher = { blobVerbunden: boolean; inDerCloud: boolean; umgebung: string };
+type Speicher = {
+  blobVerbunden: boolean;
+  /** Store per OIDC verbunden, aber ohne Token – siehe lib/images.ts. */
+  tokenFehlt: boolean;
+  inDerCloud: boolean;
+  umgebung: string;
+};
 
 export default function AdminPanel({
   slots,
@@ -403,23 +409,27 @@ function TextRow({ slotId, field }: { slotId: string; field: TextView }) {
    eingestellt sein sollte. Genau diese Lücke kostet sonst eine Stunde
    Fehlersuche: Store verbunden, Variable trotzdem nicht in der Funktion. */
 function SpeicherAnzeige({ speicher }: { speicher: Speicher }) {
-  const { blobVerbunden, inDerCloud, umgebung } = speicher;
+  const { blobVerbunden, tokenFehlt, inDerCloud, umgebung } = speicher;
 
   const ok = blobVerbunden || !inDerCloud;
   const text = blobVerbunden
     ? `Speicher: Vercel Blob (${umgebung})`
-    : inDerCloud
-      ? `Speicher fehlt (${umgebung})`
-      : "Speicher: lokal";
+    : tokenFehlt
+      ? `Token fehlt (${umgebung})`
+      : inDerCloud
+        ? `Speicher fehlt (${umgebung})`
+        : "Speicher: lokal";
 
   return (
     <span
       title={
         blobVerbunden
           ? "BLOB_READ_WRITE_TOKEN ist gesetzt. Änderungen werden dauerhaft gespeichert."
-          : inDerCloud
-            ? "BLOB_READ_WRITE_TOKEN fehlt in dieser Bereitstellung. Blob-Store verbinden und neu bereitstellen."
-            : "Lokale Entwicklung: Bilder unter public/uploads, Texte unter .data/"
+          : tokenFehlt
+            ? "Der Blob-Store ist verbunden (BLOB_STORE_ID), aber BLOB_READ_WRITE_TOKEN fehlt. Die eingesetzte Version von @vercel/blob kann nur den Token lesen – Token in den Environment Variables eintragen und neu bereitstellen."
+            : inDerCloud
+              ? "BLOB_READ_WRITE_TOKEN fehlt in dieser Bereitstellung. Blob-Store verbinden und neu bereitstellen."
+              : "Lokale Entwicklung: Bilder unter public/uploads, Texte unter .data/"
       }
       className={`hidden items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-medium sm:inline-flex ${
         ok
