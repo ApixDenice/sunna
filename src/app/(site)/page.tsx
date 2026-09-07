@@ -6,6 +6,7 @@ import Stars from "@/components/Stars";
 import SunArc from "@/components/SunArc";
 import { site } from "@/lib/site";
 import { getGoogleReviews, formatRating } from "@/lib/reviews";
+import { resolveText } from "@/lib/texts";
 
 export const metadata: Metadata = {
   title: "Photovoltaik aus Lengede – persönlich geplant von Kerstin Klaiber",
@@ -13,29 +14,16 @@ export const metadata: Metadata = {
   alternates: { canonical: "/" },
 };
 
+/**
+ * Nur noch Bildplatz und Layout stehen hier. Überschrift und Beschreibung
+ * jeder Karte kommen aus dem Textspeicher (Standardwerte in lib/slot-texts.ts),
+ * damit Kerstin sie im Admin direkt unter dem passenden Bild ändern kann.
+ */
 const leistungen = [
-  {
-    slot: "home-leistung-anlage",
-    kicker: "01",
-    title: "Photovoltaikanlage",
-    text: "Bifaziale Glas-Glas-Module mit patentierter Technologie, geplant für genau Ihr Dach – nicht nach Katalog. 10 Jahre Garantie auf die Technik, 25 Jahre auf die Modulleistung.",
-    span: "lg:row-span-2",
-  },
-  {
-    slot: "home-leistung-speicher",
-    kicker: "02",
-    title: "Stromspeicher",
-    text: "Damit der Strom vom Mittag auch abends noch da ist. Passend dimensioniert auf Ihren echten Verbrauch statt auf die größte Rechnung.",
-    span: "",
-  },
-  {
-    slot: "home-leistung-wallbox",
-    kicker: "03",
-    title: "Wallbox, Wärmepumpe & Haustechnik",
-    text: "Zählerschrank, Ladepunkt, Wärmepumpe als Ablösung der alten Heizung, Anmeldungen beim Netzbetreiber: Wir kennen die Haustechnik und erledigen alle Meldungen für Sie.",
-    span: "",
-  },
-];
+  { slot: "home-leistung-anlage", kicker: "01", span: "lg:row-span-2" },
+  { slot: "home-leistung-speicher", kicker: "02", span: "" },
+  { slot: "home-leistung-wallbox", kicker: "03", span: "" },
+] as const;
 
 const ablauf = [
   {
@@ -61,7 +49,19 @@ const ablauf = [
 ];
 
 export default async function HomePage() {
-  const { rating, total, status } = await getGoogleReviews();
+  // Alles parallel: Bewertungen, Zitat und die Texte der drei Leistungskarten.
+  // Der Textspeicher wird ohnehin am Stück geladen und gecacht.
+  const [{ rating, total, status }, heroZitat, karten] = await Promise.all([
+    getGoogleReviews(),
+    resolveText("home-hero", "zitat"),
+    Promise.all(
+      leistungen.map(async (l) => ({
+        ...l,
+        title: await resolveText(l.slot, "titel"),
+        text: await resolveText(l.slot, "text"),
+      })),
+    ),
+  ]);
 
   return (
     <>
@@ -141,7 +141,7 @@ export default async function HomePage() {
 
               <div className="relative z-10 mx-auto -mt-12 w-[min(22rem,88%)] rounded-2xl border border-[var(--edge)] bg-paper/95 p-6 shadow-[0_20px_50px_-30px_rgba(36,7,51,0.55)] backdrop-blur-sm lg:absolute lg:-left-6 lg:bottom-10 lg:mt-0">
                 <p className="display-tight text-[1.25rem] text-plum-900 pretty">
-                  „Ich fange überall die Sonne ein – zuverlässig, sauber, fair.“
+                  {`„${heroZitat}“`}
                 </p>
                 <div className="mt-4 flex items-center justify-between gap-4">
                   <p className="text-sm text-ink-muted">
@@ -228,7 +228,7 @@ export default async function HomePage() {
           </Reveal>
 
           <div className="mt-14 grid gap-6 lg:grid-cols-2">
-            {leistungen.map((l, i) => (
+            {karten.map((l, i) => (
               <Reveal
                 key={l.slot}
                 delay={i * 80}

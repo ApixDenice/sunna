@@ -8,9 +8,15 @@ import { slotById, type ImageSlot } from "./slots";
  * Deshalb ist jeder Text, der ein Bild *beschreibt*, hier an dessen Slot
  * gebunden und im Admin direkt unter dem Bild editierbar.
  *
- * Bewusst NICHT hier: Überschriften, Fließtext und Rechtstexte der Seiten.
- * Die bleiben im Code – ein volles Text-CMS war eine bewusst verworfene
- * Entscheidung (Layout-Risiko, Pflegeaufwand), siehe Architektur-Notizen.
+ * Grundregel: **Steht ein Text sichtbar am Bild, gehört er hierher.** Also die
+ * Überschrift und die Beschreibung einer Leistungskarte, die Texte einer
+ * Referenzkachel, das Zitat auf der Startseite. Tauscht Kerstin das Foto,
+ * kann sie den Text daneben im selben Zug mitziehen.
+ *
+ * Bewusst NICHT hier: Fließtext, der zu keinem Bild gehört (Ablauf, „Warum
+ * Sunna“, Über-uns-Erzähltext), und Rechtstexte. Die bleiben im Code – ein
+ * volles Text-CMS war eine bewusst verworfene Entscheidung (Layout-Risiko,
+ * Pflegeaufwand), siehe Architektur-Notizen.
  *
  * `maxLength` ist keine Schikane, sondern Layoutschutz: Ein Referenztitel mit
  * 120 Zeichen bricht die Kachel auf drei Zeilen und schiebt die Beschriftung
@@ -27,6 +33,12 @@ export type TextField = {
   maxLength: number;
   /** Der Text aus dem Code, solange nichts überschrieben wurde */
   fallback: string;
+  /**
+   * Steht nicht sichtbar auf der Seite (bislang nur die Bildbeschreibung).
+   * Das Admin-Panel markiert solche Felder, sonst sucht Kerstin ihre Änderung
+   * auf der Website vergeblich.
+   */
+  unsichtbar?: boolean;
 };
 
 type Draft = TextField;
@@ -68,8 +80,52 @@ const referenz = (
   },
 ];
 
-/** Slot-ID → Zusatzfelder. Nur Referenzkacheln haben welche. */
+/** Die drei Leistungskarten auf der Startseite: Überschrift + Beschreibung. */
+const leistung = (titel: string, text: string): Draft[] => [
+  {
+    id: "titel",
+    label: "Überschrift der Karte",
+    hint: "Steht direkt unter dem Bild. Kurz halten – zu lang bricht die Karte um.",
+    maxLength: 45,
+    fallback: titel,
+  },
+  {
+    id: "text",
+    label: "Beschreibung",
+    hint: "Zwei bis drei Sätze. Was hat der Kunde davon?",
+    multiline: true,
+    maxLength: 260,
+    fallback: text,
+  },
+];
+
+/** Slot-ID → sichtbare Texte, die zu diesem Bild gehören. */
 const bySlot: Record<string, Draft[]> = {
+  // ── Startseite ────────────────────────────────────────────────────────────
+  "home-hero": [
+    {
+      id: "zitat",
+      label: "Zitat auf der Karte am Bild",
+      hint: "Der Satz in Anführungszeichen unten am großen Bild. Die Anführungszeichen setzt die Seite selbst.",
+      multiline: true,
+      maxLength: 130,
+      fallback: "Ich fange überall die Sonne ein – zuverlässig, sauber, fair.",
+    },
+  ],
+  "home-leistung-anlage": leistung(
+    "Photovoltaikanlage",
+    "Bifaziale Glas-Glas-Module mit patentierter Technologie, geplant für genau Ihr Dach – nicht nach Katalog. 10 Jahre Garantie auf die Technik, 25 Jahre auf die Modulleistung.",
+  ),
+  "home-leistung-speicher": leistung(
+    "Stromspeicher",
+    "Damit der Strom vom Mittag auch abends noch da ist. Passend dimensioniert auf Ihren echten Verbrauch statt auf die größte Rechnung.",
+  ),
+  "home-leistung-wallbox": leistung(
+    "Wallbox, Wärmepumpe & Haustechnik",
+    "Zählerschrank, Ladepunkt, Wärmepumpe als Ablösung der alten Heizung, Anmeldungen beim Netzbetreiber: Wir kennen die Haustechnik und erledigen alle Meldungen für Sie.",
+  ),
+
+  // ── Referenzen ────────────────────────────────────────────────────────────
   "ref-1": referenz(
     "Solardach, vollflächig belegt",
     "Anthrazit auf Anthrazit – Ertrag, den man kaum sieht",
@@ -140,18 +196,24 @@ const bySlot: Record<string, Draft[]> = {
 
 /**
  * Alle editierbaren Textfelder eines Bildplatzes.
- * Die Bildbeschreibung hat jeder Slot – sie kommt aus `alt` in slots.ts.
+ *
+ * Reihenfolge ist Absicht: erst die Texte, die man auf der Website sieht,
+ * ganz zuletzt die Bildbeschreibung. Sie stand vorher an erster Stelle und
+ * war damit das Feld, das man zuerst ausprobiert – nur ändert sich sichtbar
+ * nichts, weil sie im `alt`-Attribut landet. Das liest sich wie ein Fehler,
+ * ist aber ihr Zweck.
  */
 export function textFieldsFor(slot: ImageSlot): TextField[] {
   return [
+    ...(bySlot[slot.id] ?? []),
     {
       id: "alt",
-      label: "Bildbeschreibung",
-      hint: "Wird blinden Besuchern vorgelesen und von Google gelesen. Beschreiben Sie sachlich, was auf dem Foto zu sehen ist.",
+      label: "Bildbeschreibung (steht nicht auf der Seite)",
+      hint: "Unsichtbar: wird blinden Besuchern vorgelesen und von Google gelesen. Sachlich beschreiben, was auf dem Foto zu sehen ist.",
       maxLength: 160,
       fallback: slot.alt,
+      unsichtbar: true,
     },
-    ...(bySlot[slot.id] ?? []),
   ];
 }
 

@@ -358,6 +358,13 @@ function TextRow({ slotId, field }: { slotId: string; field: TextView }) {
       <div className="flex items-baseline justify-between gap-3">
         <label htmlFor={inputId} className="text-xs font-semibold text-plum-900">
           {field.label}
+          {/* Ohne diesen Hinweis sucht man die Änderung auf der Seite und
+              hält das ausbleibende Ergebnis für einen Fehler. */}
+          {field.unsichtbar && (
+            <span className="ml-2 rounded-full bg-sand px-2 py-0.5 text-[0.625rem] font-normal text-ink-muted">
+              unsichtbar
+            </span>
+          )}
           {isCustom && <span className="ml-2 font-normal text-magenta-600">geändert</span>}
         </label>
         <span className={`text-[0.6875rem] tabular-nums ${rest < 15 ? "text-magenta-600" : "text-ink-muted"}`}>
