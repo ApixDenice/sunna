@@ -20,11 +20,20 @@ export const metadata: Metadata = {
  * Anfrage jetzt an das E-Mail-Programm des Besuchers, es erreicht unseren
  * Server also gar keine Formulardaten mehr (siehe kontakt/ContactForm.tsx).
  *
- * VORAUSSETZUNG, die noch erfüllt werden muss:
- *   • Auftragsverarbeitungsvertrag (AVV/DPA) mit Vercel abschließen
- *     – im Vercel-Dashboard unter Settings → Legal.
- * Der Text oben behauptet, dass dieser Vertrag besteht. Ohne Abschluss wäre
- * das eine unwahre Angabe – also erst abschließen, dann live gehen.
+ * VORAUSSETZUNG, die noch erfüllt werden muss – VERCEL-PLAN:
+ * Der Text oben behauptet, dass mit dem Hoster ein Auftragsverarbeitungs-
+ * vertrag besteht. Vercels DPA gilt laut eigenem Wortlaut aber nur
+ * „for Customers who are on Enterprise and Pro plans" – auf dem Hobby-Plan
+ * gibt es ihn nicht, und es gibt dort auch nichts zu akzeptieren. Auf Pro
+ * gilt er automatisch mit den Nutzungsbedingungen, ohne separate Unterschrift.
+ *
+ * Dazu kommt: Vercels Fair-Use-Richtlinie beschränkt Hobby ausdrücklich auf
+ * „non-commercial personal use only". Eine Firmenwebsite, die Leistungen
+ * bewirbt und für deren Erstellung bezahlt wurde, fällt nicht darunter.
+ *
+ * Also: VOR dem Livegang auf Pro wechseln. Sonst ist die Aussage oben unwahr
+ * und das Projekt kann wegen Verstoßes gegen die Nutzungsbedingungen
+ * pausiert werden.
  * Rechtliche Prüfung durch eine Anwältin/einen Anwalt wird weiterhin empfohlen.
  */
 

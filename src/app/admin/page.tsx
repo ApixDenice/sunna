@@ -12,7 +12,11 @@ export const dynamic = "force-dynamic";
 export default async function AdminPage() {
   if (!(await isAuthenticated())) return <LoginForm />;
 
-  const [manifest, texts] = await Promise.all([getManifest(), getTexts()]);
+  const [manifest, texts, speicher] = await Promise.all([
+    getManifest(),
+    getTexts(),
+    speicherStatus(),
+  ]);
 
   const slots = imageSlots.map((slot) => ({
     ...slot,
@@ -30,5 +34,5 @@ export default async function AdminPage() {
     }),
   }));
 
-  return <AdminPanel slots={slots} groups={slotGroups} speicher={speicherStatus()} />;
+  return <AdminPanel slots={slots} groups={slotGroups} speicher={speicher} />;
 }

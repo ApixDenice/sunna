@@ -2,8 +2,9 @@ import type { NextConfig } from "next";
 
 const config: NextConfig = {
   images: {
-    // Vom Admin hochgeladene Bilder liegen im Vercel Blob Store.
-    remotePatterns: [{ protocol: "https", hostname: "*.public.blob.vercel-storage.com" }],
+    // Hochgeladene Bilder kommen jetzt aus dem eigenen Datenverzeichnis und
+    // werden über /medien/... ausgeliefert – also gleiche Herkunft, keine
+    // remotePatterns nötig.
     formats: ["image/avif", "image/webp"],
   },
   poweredByHeader: false,

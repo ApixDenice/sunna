@@ -10,11 +10,12 @@ type TextView = TextField & { value: string; isCustom: boolean };
 type SlotView = ImageSlot & { currentUrl: string; isCustom: boolean; texts: TextView[] };
 
 type Speicher = {
-  blobVerbunden: boolean;
-  /** Store per OIDC verbunden, aber ohne Token – siehe lib/images.ts. */
-  tokenFehlt: boolean;
-  inDerCloud: boolean;
-  umgebung: string;
+  /** Pfad des Datenverzeichnisses (DATA_DIR), siehe lib/images.ts. */
+  verzeichnis: string;
+  /** Echter Schreibtest, nicht nur Rechte-Bits. */
+  schreibbar: boolean;
+  /** true, wenn DATA_DIR gesetzt ist – also beim Hosting mit Volume. */
+  eigenesVerzeichnis: boolean;
 };
 
 export default function AdminPanel({
@@ -435,37 +436,30 @@ function TextRow({ slotId, field }: { slotId: string; field: TextView }) {
    eingestellt sein sollte. Genau diese Lücke kostet sonst eine Stunde
    Fehlersuche: Store verbunden, Variable trotzdem nicht in der Funktion. */
 function SpeicherAnzeige({ speicher }: { speicher: Speicher }) {
-  const { blobVerbunden, tokenFehlt, inDerCloud, umgebung } = speicher;
+  const { verzeichnis, schreibbar, eigenesVerzeichnis } = speicher;
 
-  const ok = blobVerbunden || !inDerCloud;
-  const text = blobVerbunden
-    ? `Speicher: Vercel Blob (${umgebung})`
-    : tokenFehlt
-      ? `Token fehlt (${umgebung})`
-      : inDerCloud
-        ? `Speicher fehlt (${umgebung})`
-        : "Speicher: lokal";
+  const text = !schreibbar
+    ? "Speicher nicht beschreibbar"
+    : eigenesVerzeichnis
+      ? "Speicher: Volume"
+      : "Speicher: lokal";
 
   return (
     <span
       title={
-        blobVerbunden
-          ? "BLOB_READ_WRITE_TOKEN ist gesetzt. Änderungen werden dauerhaft gespeichert."
-          : tokenFehlt
-            ? "Der Blob-Store ist verbunden (BLOB_STORE_ID), aber BLOB_READ_WRITE_TOKEN fehlt. Die eingesetzte Version von @vercel/blob kann nur den Token lesen – Token in den Environment Variables eintragen und neu bereitstellen."
-            : inDerCloud
-              ? "BLOB_READ_WRITE_TOKEN fehlt in dieser Bereitstellung. Blob-Store verbinden und neu bereitstellen."
-              : "Lokale Entwicklung: Bilder unter public/uploads, Texte unter .data/"
+        schreibbar
+          ? `Bilder und Texte werden in ${verzeichnis} gespeichert.`
+          : `${verzeichnis} ist nicht beschreibbar. Beim Hosting muss dort ein Volume eingeh\u00e4ngt und DATA_DIR auf denselben Pfad gesetzt sein.`
       }
       className={`hidden items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-medium sm:inline-flex ${
-        ok
+        schreibbar
           ? "border-[var(--edge)] text-ink-muted"
           : "border-magenta-500 bg-magenta-100 text-magenta-700"
       }`}
     >
       <span
         aria-hidden
-        className={`h-1.5 w-1.5 rounded-full ${ok ? "bg-magenta-500" : "bg-magenta-700"}`}
+        className={`h-1.5 w-1.5 rounded-full ${schreibbar ? "bg-magenta-500" : "bg-magenta-700"}`}
       />
       {text}
     </span>

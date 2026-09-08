@@ -20,7 +20,9 @@ function refreshSite() {
  * zweiter Versuch am selben Konfigurationsfehler scheitert.
  */
 function nutzbareMeldung(err: unknown, fallback: string) {
-  return err instanceof Error && err.message.startsWith("Bild-Upload nicht möglich")
+  // Alle Speicher-Meldungen aus lib/images.ts haben die Form
+  // "<Aktion> nicht möglich: <Anleitung>" – Upload wie Zurücksetzen.
+  return err instanceof Error && err.message.includes("nicht möglich:")
     ? err.message
     : fallback;
 }

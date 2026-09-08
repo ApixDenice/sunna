@@ -3,31 +3,26 @@ import { promises as fs } from "node:fs";
 import path from "node:path";
 import { unstable_cache, revalidateTag } from "next/cache";
 import { fallbackFor, fieldExists } from "./slot-texts";
-import { useBlob, speicherFehlerText } from "./images";
+import { datenVerzeichnis, schreibeAtomar, speicherFehlerText } from "./images";
 
 /**
  * Speicherung der im Admin geänderten Bildtexte.
  *
- * Aufbau bewusst identisch zu lib/images.ts:
- * Produktion (Vercel) im Blob Store, lokal unter .data/ – gleiche Denkweise,
- * gleiche Fallstricke, nichts Neues zu lernen. Der Text aus dem Code bleibt
- * immer der Rückfallwert; gespeichert wird nur, was tatsächlich abweicht.
+ * Liegt bewusst im selben Datenverzeichnis wie die Bilder (siehe lib/images.ts):
+ * ein Volume, ein Pfad, alles überlebt gemeinsam einen Deploy. Der Text aus dem
+ * Code bleibt immer der Rückfallwert; gespeichert wird nur, was abweicht.
  */
 
 /** slotId -> fieldId -> Text */
 export type TextStore = Record<string, Record<string, string>>;
 
-const STORE_PATH = "sunna/texts.json";
-const LOCAL_STORE = path.join(process.cwd(), ".data", "texts.json");
 const CACHE_TAG = "sunna-texts";
+const textDatei = () => path.join(datenVerzeichnis(), "texts.json");
 
-// Store-Erkennung und Fehlertext kommen aus lib/images.ts. Bewusst geteilt
-// statt kopiert: es ist derselbe Store, dieselbe Ursache – zwei Kopien liefen
-// sonst früher oder später auseinander und Kerstin bekäme für ein und dasselbe
-// Problem zwei verschiedene Erklärungen.
-
-function assertWritableStore() {
-  if (!useBlob() && process.env.VERCEL) {
+async function assertWritableStore() {
+  try {
+    await fs.mkdir(datenVerzeichnis(), { recursive: true });
+  } catch {
     throw new Error(speicherFehlerText("Text speichern"));
   }
 }
@@ -36,20 +31,7 @@ function assertWritableStore() {
 
 async function readStoreUncached(): Promise<TextStore> {
   try {
-    if (useBlob()) {
-      const { list } = await import("@vercel/blob");
-      const { blobs } = await list({ prefix: STORE_PATH, limit: 1 });
-      if (!blobs.length) return {};
-      // Beim Überschreiben bleibt der Pfad – und damit die URL – gleich, das
-      // CDN würde also die alte Datei ausliefern. Zeitstempel gegen den
-      // CDN-Cache, `no-store` gegen den Fetch-Cache. Teuer ist das nicht:
-      // Dieser Aufruf steckt selbst in unstable_cache.
-      const version = new Date(blobs[0].uploadedAt).getTime();
-      const res = await fetch(`${blobs[0].url}?v=${version}`, { cache: "no-store" });
-      if (!res.ok) return {};
-      return (await res.json()) as TextStore;
-    }
-    return JSON.parse(await fs.readFile(LOCAL_STORE, "utf8")) as TextStore;
+    return JSON.parse(await fs.readFile(textDatei(), "utf8")) as TextStore;
   } catch {
     // Noch nie ein Text geändert -> überall die Werte aus dem Code.
     return {};
@@ -83,24 +65,7 @@ export async function resolveText(slotId: string, fieldId: string): Promise<stri
 /* ── Schreiben ──────────────────────────────────────────────────────────────── */
 
 async function writeStore(store: TextStore) {
-  if (useBlob()) {
-    const { put } = await import("@vercel/blob");
-    await put(STORE_PATH, JSON.stringify(store, null, 2), {
-      access: "public",
-      contentType: "application/json",
-      addRandomSuffix: false,
-      cacheControlMaxAge: 0,
-      // Hinweis für ein späteres Upgrade auf @vercel/blob 1.x: Dort wirft put()
-      // beim Überschreiben eines vorhandenen Pfades, solange nicht
-      // `allowOverwrite: true` gesetzt ist. In der hier installierten 0.27.x
-      // gibt es die Option noch nicht – Überschreiben ist dort das
-      // Standardverhalten. Beim Versionswechsel also ergänzen, sonst schlägt
-      // jede Änderung im Admin fehl.
-    });
-  } else {
-    await fs.mkdir(path.dirname(LOCAL_STORE), { recursive: true });
-    await fs.writeFile(LOCAL_STORE, JSON.stringify(store, null, 2), "utf8");
-  }
+  await schreibeAtomar(textDatei(), JSON.stringify(store, null, 2));
   revalidateTag(CACHE_TAG);
 }
 
@@ -111,7 +76,7 @@ async function writeStore(store: TextStore) {
  */
 export async function saveSlotText(slotId: string, fieldId: string, value: string) {
   if (!fieldExists(slotId, fieldId)) throw new Error("Unbekanntes Textfeld.");
-  assertWritableStore();
+  await assertWritableStore();
 
   const store = await readStoreUncached();
   const clean = value.replace(/\s+/g, " ").trim();
@@ -133,7 +98,7 @@ export async function saveSlotText(slotId: string, fieldId: string, value: strin
 /** Setzt ein Feld auf den Text aus dem Code zurück. */
 export async function resetSlotText(slotId: string, fieldId: string) {
   if (!fieldExists(slotId, fieldId)) throw new Error("Unbekanntes Textfeld.");
-  assertWritableStore();
+  await assertWritableStore();
 
   const store = await readStoreUncached();
   if (store[slotId]) {
