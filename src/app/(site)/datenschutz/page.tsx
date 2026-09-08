@@ -15,25 +15,24 @@ export const metadata: Metadata = {
  * (kein Tracking, keine Cookies außer der Admin-Session, keine externen
  * Schriften, keine Kartendienst-Einbettung).
  *
- * Es gibt nur noch EINEN Auftragsverarbeiter: den Hoster Vercel. Der frühere
+ * Es gibt genau EINEN Auftragsverarbeiter: den Hoster Railway. Der frühere
  * Mailversand über Resend ist entfallen – das Kontaktformular übergibt die
  * Anfrage jetzt an das E-Mail-Programm des Besuchers, es erreicht unseren
  * Server also gar keine Formulardaten mehr (siehe kontakt/ContactForm.tsx).
  *
- * VORAUSSETZUNG, die noch erfüllt werden muss – VERCEL-PLAN:
- * Der Text oben behauptet, dass mit dem Hoster ein Auftragsverarbeitungs-
- * vertrag besteht. Vercels DPA gilt laut eigenem Wortlaut aber nur
- * „for Customers who are on Enterprise and Pro plans" – auf dem Hobby-Plan
- * gibt es ihn nicht, und es gibt dort auch nichts zu akzeptieren. Auf Pro
- * gilt er automatisch mit den Nutzungsbedingungen, ohne separate Unterschrift.
+ * VORAUSSETZUNG, die vor dem Livegang erfüllt sein muss:
+ * Der Text unten sagt, dass mit dem Hoster ein Auftragsverarbeitungsvertrag
+ * besteht. Railways DPA schließt keinen Tarif aus, wird aber NICHT automatisch
+ * mit den Nutzungsbedingungen wirksam: „Customer must complete the information
+ * requested and submit the DocuSign form". Das Formular muss also tatsächlich
+ * ausgefüllt und abgeschickt werden, sonst ist die Angabe unten unwahr.
  *
- * Dazu kommt: Vercels Fair-Use-Richtlinie beschränkt Hobby ausdrücklich auf
- * „non-commercial personal use only". Eine Firmenwebsite, die Leistungen
- * bewirbt und für deren Erstellung bezahlt wurde, fällt nicht darunter.
+ * Zum Drittlandtransfer: Railway verarbeitet nach eigener Angabe primär in den
+ * USA („Company's primary processing operations take place in the United
+ * States"). Der Dienst läuft in der Region EU West; die Aussage unten stützt
+ * die Übermittlung deshalb auf die Standardvertragsklauseln, die Bestandteil
+ * des DPA sind. Wechselt die Region, muss dieser Absatz mitgezogen werden.
  *
- * Also: VOR dem Livegang auf Pro wechseln. Sonst ist die Aussage oben unwahr
- * und das Projekt kann wegen Verstoßes gegen die Nutzungsbedingungen
- * pausiert werden.
  * Rechtliche Prüfung durch eine Anwältin/einen Anwalt wird weiterhin empfohlen.
  */
 
@@ -96,10 +95,12 @@ export default function DatenschutzPage() {
             und störungsfreien Betrieb der Website).
           </p>
           <p>
-            Hosting-Anbieter ist die Vercel Inc., 440 N Barranca Avenue #4133, Covina, CA 91723,
-            USA. Mit Vercel besteht ein Auftragsverarbeitungsvertrag; die Übermittlung in die USA
-            wird auf die EU-Standardvertragsklauseln gestützt. Die Auslieferung dieser Website
-            erfolgt über Vercels Rechenzentren in der Europäischen Union.
+            Hosting-Anbieter ist die Railway Corporation, 548 Market St Suite 68956,
+            San Francisco, California 94104, USA. Mit Railway besteht ein
+            Auftragsverarbeitungsvertrag nach Art. 28 DSGVO. Diese Website wird in der Region
+            EU West betrieben; soweit dabei personenbezogene Daten in die USA übermittelt
+            werden, wird dies auf die EU-Standardvertragsklauseln gestützt, die Bestandteil
+            des Auftragsverarbeitungsvertrags sind.
           </p>
         </Section>
 
